@@ -152,122 +152,10 @@
     </div>
 
     <script>
-      const canvas = document.getElementById("game-canvas");
-      const ctx = canvas.getContext("2d");
-      const undoBtn = document.getElementById("undo-btn");
-      const clearBtn = document.getElementById("clear-btn");
-      const messageDiv = document.getElementById("message");
-      const levelSpan = document.getElementById("current-level");
+      // Проверка загрузки скрипта
+      console.log("✓ Скрипт игры начал выполнение");
 
-      const GRID_SIZE = 7;
-      const CELL_SIZE = 70;
-      const AD_FORMAT = "interstitial";
-      const STORAGE_KEY = "lines_of_mind_level";
-
-      let gameData = [];
-      let currentRound = 0;
-      let currentGrid = [];
-      let path = [];
-      let isDrawing = false;
-      let numbers = [];
-      let gameBlocked = false;
-      let errorSegmentIndex = -1;
-      let adCheckIntervalId = null;
-
-      function isBridgeAvailable() {
-        return typeof window !== "undefined" && window.vkBridge;
-      }
-
-      async function checkNativeAds() {
-        if (!isBridgeAvailable()) {
-          return;
-        }
-
-        try {
-          await window.vkBridge.send("VKWebAppCheckNativeAds", {
-            ad_format: AD_FORMAT,
-          });
-        } catch (error) {
-          console.error("Не удалось выполнить VKWebAppCheckNativeAds", error);
-        }
-      }
-
-      async function showInterstitialAd() {
-        if (!isBridgeAvailable()) {
-          return;
-        }
-
-        try {
-          const response = await window.vkBridge.send("VKWebAppShowNativeAds", {
-            ad_format: AD_FORMAT,
-          });
-
-          if (!response?.result) {
-            console.warn("Показ interstitial-рекламы не удался", response);
-          }
-        } catch (error) {
-          console.error("Ошибка при показе interstitial-рекламы", error);
-        }
-      }
-
-      async function loadSavedLevel() {
-        if (!isBridgeAvailable()) {
-          return 1;
-        }
-
-        try {
-          const response = await window.vkBridge.send("VKWebAppStorageGet", {
-            keys: [STORAGE_KEY],
-          });
-
-          if (response.keys && response.keys.length > 0) {
-            const savedLevel = parseInt(response.keys[0].value, 10);
-            if (!isNaN(savedLevel) && savedLevel >= 1 && savedLevel <= 100) {
-              console.log("Загружен сохранённый уровень:", savedLevel);
-              return savedLevel;
-            }
-          }
-        } catch (error) {
-          console.error("Ошибка при загрузке уровня из VK Storage", error);
-        }
-
-        return 1;
-      }
-
-      async function saveCurrentLevel(level) {
-        if (!isBridgeAvailable()) {
-          return;
-        }
-
-        try {
-          await window.vkBridge.send("VKWebAppStorageSet", {
-            key: STORAGE_KEY,
-            value: level.toString(),
-          });
-          console.log("Уровень сохранён:", level);
-        } catch (error) {
-          console.error("Ошибка при сохранении уровня в VK Storage", error);
-        }
-      }
-
-      async function initAds() {
-        if (!isBridgeAvailable()) {
-          return;
-        }
-
-        try {
-          await window.vkBridge.send("VKWebAppInit");
-        } catch (error) {
-          console.error("VKWebAppInit завершился с ошибкой", error);
-        }
-
-        await checkNativeAds();
-
-        if (adCheckIntervalId === null) {
-          adCheckIntervalId = setInterval(checkNativeAds, 60_000);
-        }
-      }
-
+      // Данные уровней (100 уровней)
       const gameDataJSON = [
         {
           round_id: 1,
@@ -389,13 +277,1253 @@
             [null, null, null, null, null, null, null],
           ],
         },
+        {
+          round_id: 11,
+          grid: [
+            [null, null, null, null, null, 4, null],
+            [null, null, 6, null, null, null, null],
+            [null, null, null, 7, null, null, null],
+            [3, null, null, null, 8, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 2, null, 9, null, null],
+            [null, null, 1, null, null, 5, null],
+          ],
+        },
+        {
+          round_id: 12,
+          grid: [
+            [null, null, 1, null, null, null, 8],
+            [null, 7, null, null, null, 9, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 5, null, 6, null, null],
+            [null, null, null, null, 4, null, null],
+            [null, null, 2, null, 3, null, null],
+          ],
+        },
+        {
+          round_id: 13,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [null, null, null, 8, null, null, null],
+            [null, null, null, null, null, null, 7],
+            [null, null, null, null, null, 1, null],
+            [9, null, null, null, 6, null, null],
+            [null, null, null, 4, null, 5, null],
+            [null, null, 3, null, 2, null, null],
+          ],
+        },
+        {
+          round_id: 14,
+          grid: [
+            [null, null, null, null, null, 2, null],
+            [null, null, null, null, 7, null, null],
+            [1, null, null, null, null, null, null],
+            [5, null, null, null, null, null, 3],
+            [null, null, 6, null, 9, null, null],
+            [null, null, null, null, null, 8, null],
+            [null, null, null, null, 4, null, null],
+          ],
+        },
+        {
+          round_id: 15,
+          grid: [
+            [null, null, 8, null, null, null, null],
+            [null, 2, null, null, null, null, null],
+            [null, null, null, null, 7, null, null],
+            [null, null, null, null, null, 5, null],
+            [null, null, null, null, 6, null, null],
+            [null, null, null, 9, null, null, null],
+            [1, null, 3, null, 4, null, null],
+          ],
+        },
+        {
+          round_id: 16,
+          grid: [
+            [1, null, null, null, null, null, 5],
+            [null, 4, null, 9, null, null, 6],
+            [null, null, null, null, null, 7, null],
+            [null, null, 8, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, 3, null],
+            [null, null, 2, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 17,
+          grid: [
+            [null, null, null, null, null, 3, 4],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [2, null, null, 7, null, 6, null],
+            [null, 8, null, null, 1, 5, null],
+            [null, 9, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 18,
+          grid: [
+            [2, null, null, null, null, null, null],
+            [null, null, null, 7, null, null, null],
+            [3, 6, null, null, null, null, null],
+            [null, null, null, null, 8, null, null],
+            [null, 5, null, null, null, null, 1],
+            [null, null, null, null, null, null, null],
+            [null, 4, null, null, 9, null, null],
+          ],
+        },
+        {
+          round_id: 19,
+          grid: [
+            [null, null, null, null, 9, null, null],
+            [3, null, null, null, null, null, null],
+            [null, null, null, null, 5, null, 8],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [2, 1, 4, null, 6, null, null],
+            [null, null, null, null, null, null, 7],
+          ],
+        },
+        {
+          round_id: 20,
+          grid: [
+            [null, null, null, null, null, 6, 7],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 9, null, null, 1],
+            [null, null, null, null, null, 8, null],
+            [5, null, null, 4, null, null, null],
+            [null, null, null, null, 3, null, null],
+            [null, 2, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 21,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, 8],
+            [null, 4, 9, null, null, null, null],
+            [null, null, null, 5, 6, 7, null],
+            [3, null, null, null, null, null, null],
+            [null, null, null, null, 2, null, null],
+            [null, null, null, null, null, null, 1],
+          ],
+        },
+        {
+          round_id: 22,
+          grid: [
+            [3, null, null, null, null, 7, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, 8, null, null],
+            [null, null, null, 9, null, null, 6],
+            [2, 4, null, null, null, null, null],
+            [null, 1, null, null, 5, null, null],
+            [null, null, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 23,
+          grid: [
+            [null, null, null, null, null, 3, null],
+            [null, null, null, null, 4, 5, null],
+            [null, null, 9, null, null, null, null],
+            [null, null, 8, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 7, null, null, 1, null],
+            [null, null, 6, null, null, 2, null],
+          ],
+        },
+        {
+          round_id: 24,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, 8, 1, null],
+            [null, 6, null, null, null, null, null],
+            [5, null, 7, null, null, null, 2],
+            [null, null, null, 9, null, null, null],
+            [null, null, null, null, null, null, null],
+            [4, null, null, 3, null, null, null],
+          ],
+        },
+        {
+          round_id: 25,
+          grid: [
+            [3, null, null, null, null, null, 4],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, 9],
+            [null, null, null, 8, null, null, null],
+            [null, null, 7, null, null, null, 1],
+            [null, null, null, 5, null, 6, null],
+            [2, null, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 26,
+          grid: [
+            [null, null, null, null, null, null, 8],
+            [null, 6, null, null, null, null, 9],
+            [null, null, null, null, 7, null, null],
+            [null, 5, null, null, null, null, null],
+            [null, null, null, null, 4, null, null],
+            [null, null, null, null, null, null, null],
+            [3, null, 2, null, 1, null, null],
+          ],
+        },
+        {
+          round_id: 27,
+          grid: [
+            [3, 2, null, null, 7, null, null],
+            [null, null, null, 1, null, null, 6],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, 8, null, null, 9, null, null],
+            [4, null, null, 5, null, null, null],
+          ],
+        },
+        {
+          round_id: 28,
+          grid: [
+            [null, null, null, 7, null, null, null],
+            [null, null, null, null, null, 3, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 9, null, null, null, 2],
+            [6, null, null, 8, null, 4, null],
+            [5, null, null, null, null, null, null],
+            [null, null, null, null, null, null, 1],
+          ],
+        },
+        {
+          round_id: 29,
+          grid: [
+            [null, null, null, null, 9, null, null],
+            [null, 1, null, null, null, null, null],
+            [2, null, null, null, 8, null, null],
+            [null, null, null, null, null, 7, null],
+            [3, null, null, 5, 6, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, 4, null, null],
+          ],
+        },
+        {
+          round_id: 30,
+          grid: [
+            [null, null, 6, null, null, null, null],
+            [null, 7, null, 8, null, null, 3],
+            [null, null, null, null, 5, null, null],
+            [null, null, 9, null, null, null, null],
+            [null, null, null, null, 4, null, null],
+            [null, 1, null, null, null, null, null],
+            [null, null, 2, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 31,
+          grid: [
+            [5, null, null, null, null, 3, null],
+            [null, null, null, null, null, null, null],
+            [6, null, 9, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, 4, null, null],
+            [null, 8, null, null, null, null, null],
+            [null, 7, null, null, 1, null, 2],
+          ],
+        },
+        {
+          round_id: 32,
+          grid: [
+            [null, null, null, 2, 3, 4, null],
+            [null, 1, null, 5, null, null, null],
+            [null, null, null, null, null, 6, null],
+            [null, null, null, null, null, null, null],
+            [null, 8, null, null, null, null, null],
+            [null, null, null, null, null, 9, null],
+            [7, null, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 33,
+          grid: [
+            [null, null, 9, null, null, 7, 6],
+            [null, null, null, null, null, null, null],
+            [null, null, 2, null, null, null, null],
+            [null, null, 3, null, null, 8, 5],
+            [null, null, null, null, null, null, null],
+            [null, 1, null, null, null, null, null],
+            [null, null, null, null, null, 4, null],
+          ],
+        },
+        {
+          round_id: 34,
+          grid: [
+            [6, null, null, null, null, 5, 1],
+            [null, null, null, null, null, null, null],
+            [null, null, 9, null, 8, null, null],
+            [null, null, null, null, null, null, null],
+            [null, 7, null, null, null, null, null],
+            [null, null, 3, null, null, 4, null],
+            [null, null, 2, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 35,
+          grid: [
+            [null, null, null, null, null, null, 3],
+            [2, null, 8, 9, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, 7, null],
+            [null, 6, null, null, null, null, null],
+            [null, null, null, 5, null, null, 4],
+            [null, null, null, null, 1, null, null],
+          ],
+        },
+        {
+          round_id: 36,
+          grid: [
+            [null, null, 6, null, null, null, null],
+            [null, 1, null, null, null, 7, null],
+            [null, 2, null, null, 8, null, null],
+            [3, null, null, null, null, null, null],
+            [null, null, null, null, null, null, 5],
+            [null, null, 9, null, null, null, null],
+            [null, null, null, null, 4, null, null],
+          ],
+        },
+        {
+          round_id: 37,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, 3, null, null],
+            [null, null, 8, null, null, 4, 2],
+            [null, null, null, 7, 5, 1, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 6, null, null, null],
+            [null, 9, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 38,
+          grid: [
+            [null, null, 3, null, null, null, 2],
+            [null, 4, null, null, null, 1, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 9, null, null, null],
+            [8, null, null, null, null, null, 5],
+            [null, null, null, null, null, null, null],
+            [7, null, null, null, null, null, 6],
+          ],
+        },
+        {
+          round_id: 39,
+          grid: [
+            [null, null, 1, null, 2, null, null],
+            [null, 6, null, null, null, null, null],
+            [5, null, 8, null, 9, null, null],
+            [null, null, null, null, null, null, null],
+            [4, null, null, null, null, null, null],
+            [null, null, null, null, null, 7, null],
+            [null, null, null, null, 3, null, null],
+          ],
+        },
+        {
+          round_id: 40,
+          grid: [
+            [1, null, null, null, null, null, null],
+            [null, null, null, 9, null, null, null],
+            [null, 7, null, null, 8, null, null],
+            [2, null, null, null, 6, null, 4],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, 5, null],
+            [null, 3, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 41,
+          grid: [
+            [null, 2, null, null, 3, null, null],
+            [null, 1, 4, null, null, null, null],
+            [null, null, null, 6, null, null, null],
+            [null, null, null, 5, null, null, 9],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 8, null, null, null],
+            [7, null, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 42,
+          grid: [
+            [9, null, null, null, null, null, null],
+            [null, null, null, null, 8, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 5, 6, 7, null],
+            [null, null, null, null, null, null, 1],
+            [null, null, 4, null, null, 3, null],
+            [null, null, null, null, null, 2, null],
+          ],
+        },
+        {
+          round_id: 43,
+          grid: [
+            [null, null, 1, null, null, null, null],
+            [null, null, 4, null, null, 3, null],
+            [null, null, 6, null, null, null, null],
+            [null, null, null, null, 9, null, null],
+            [null, null, null, null, 8, null, null],
+            [null, null, null, null, null, null, null],
+            [null, 5, null, 7, null, null, 2],
+          ],
+        },
+        {
+          round_id: 44,
+          grid: [
+            [null, null, null, null, 4, null, 5],
+            [3, null, null, null, null, null, null],
+            [null, null, 1, null, null, null, null],
+            [null, null, null, 7, 8, 9, null],
+            [null, null, null, null, null, null, null],
+            [2, null, null, null, null, null, null],
+            [null, null, null, null, 6, null, null],
+          ],
+        },
+        {
+          round_id: 45,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [2, null, null, null, null, null, 9],
+            [null, null, null, 5, null, null, null],
+            [null, null, null, null, null, 8, null],
+            [null, null, 4, null, 7, null, null],
+            [null, 3, null, null, null, null, null],
+            [1, null, null, null, null, null, 6],
+          ],
+        },
+        {
+          round_id: 46,
+          grid: [
+            [null, null, 1, null, null, null, 2],
+            [null, 9, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, 8, 6, 5, null, 3, null],
+            [null, null, 7, null, null, null, null],
+            [null, null, null, null, 4, null, null],
+          ],
+        },
+        {
+          round_id: 47,
+          grid: [
+            [null, null, 1, 2, null, null, null],
+            [null, null, null, null, null, null, 3],
+            [4, null, null, null, null, null, 5],
+            [null, 7, null, null, 6, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 9, null, 8, null, null],
+          ],
+        },
+        {
+          round_id: 48,
+          grid: [
+            [null, null, null, null, null, 5, 1],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, 2],
+            [null, null, null, null, 9, null, null],
+            [null, null, null, null, null, null, 3],
+            [null, 6, null, 7, null, 8, null],
+            [null, 4, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 49,
+          grid: [
+            [null, null, 9, null, null, null, null],
+            [null, null, 8, null, null, null, 7],
+            [1, 6, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, 5, null, null],
+            [2, null, null, null, null, null, 4],
+            [null, null, null, 3, null, null, null],
+          ],
+        },
+        {
+          round_id: 50,
+          grid: [
+            [null, null, null, null, null, 3, null],
+            [2, null, null, null, null, null, null],
+            [null, null, null, null, null, null, 4],
+            [null, 6, null, null, null, null, null],
+            [1, null, null, 7, null, 5, null],
+            [null, null, null, null, null, null, null],
+            [9, null, null, null, 8, null, null],
+          ],
+        },
+        {
+          round_id: 51,
+          grid: [
+            [1, null, null, null, null, null, null],
+            [null, 3, null, null, null, null, null],
+            [null, null, null, null, null, 9, 4],
+            [null, null, null, null, null, null, null],
+            [2, null, 6, null, 8, null, null],
+            [null, null, null, null, 7, null, null],
+            [null, null, null, null, 5, null, null],
+          ],
+        },
+        {
+          round_id: 52,
+          grid: [
+            [null, 2, null, null, null, null, 6],
+            [null, null, null, null, null, 9, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 7, null, null, null, null],
+            [1, null, null, 8, null, null, null],
+            [4, 3, null, null, null, null, 5],
+            [null, null, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 53,
+          grid: [
+            [null, null, null, null, 5, null, null],
+            [null, 1, null, 3, null, null, null],
+            [2, null, null, null, 4, null, null],
+            [7, null, 6, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 8, null, null, null],
+            [null, null, null, null, null, null, 9],
+          ],
+        },
+        {
+          round_id: 54,
+          grid: [
+            [null, null, 1, 7, null, null, null],
+            [null, null, null, 6, null, null, null],
+            [2, 3, null, null, null, null, null],
+            [null, null, null, null, null, 9, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 4, 5, null, null, null],
+            [null, null, null, null, null, null, 8],
+          ],
+        },
+        {
+          round_id: 55,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [null, null, 9, null, null, 8, null],
+            [6, null, null, 7, null, null, null],
+            [null, null, null, null, null, 5, null],
+            [null, null, null, 4, null, null, null],
+            [null, 1, 2, null, null, null, null],
+            [null, null, null, null, 3, null, null],
+          ],
+        },
+        {
+          round_id: 56,
+          grid: [
+            [4, null, null, 5, null, null, null],
+            [null, null, null, null, null, 7, null],
+            [null, null, null, null, 8, 6, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [3, null, 9, null, null, 1, null],
+            [2, null, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 57,
+          grid: [
+            [5, null, null, null, null, null, null],
+            [null, null, null, null, null, 2, null],
+            [null, null, null, null, 1, null, null],
+            [null, null, null, 4, null, null, null],
+            [6, null, null, null, null, 3, null],
+            [null, null, null, null, 8, null, null],
+            [null, null, 7, null, 9, null, null],
+          ],
+        },
+        {
+          round_id: 58,
+          grid: [
+            [1, null, null, null, null, null, null],
+            [null, null, null, 6, null, null, null],
+            [null, null, 7, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [8, null, null, null, null, null, null],
+            [null, null, null, 5, null, 3, null],
+            [9, null, null, null, 4, null, 2],
+          ],
+        },
+        {
+          round_id: 59,
+          grid: [
+            [null, null, null, null, 2, null, 3],
+            [null, 1, null, null, null, null, null],
+            [null, null, null, null, 6, null, null],
+            [null, null, null, null, null, 9, null],
+            [4, null, null, null, null, null, null],
+            [null, null, null, null, null, 8, null],
+            [null, null, 5, null, 7, null, null],
+          ],
+        },
+        {
+          round_id: 60,
+          grid: [
+            [null, 3, null, null, null, null, null],
+            [null, null, null, null, null, null, 4],
+            [null, null, null, null, 5, null, null],
+            [null, 6, null, null, null, null, null],
+            [null, null, null, null, null, null, 7],
+            [2, null, null, 9, null, 8, null],
+            [1, null, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 61,
+          grid: [
+            [5, null, null, null, 4, null, null],
+            [null, 6, null, null, null, null, null],
+            [null, null, null, null, null, null, 3],
+            [9, null, 8, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 7, null, null, null, null],
+            [null, null, null, null, 1, null, 2],
+          ],
+        },
+        {
+          round_id: 62,
+          grid: [
+            [null, null, null, 9, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [6, 7, null, null, 8, 4, 3],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 5, null, null, null],
+            [1, null, null, null, 2, null, null],
+          ],
+        },
+        {
+          round_id: 63,
+          grid: [
+            [3, null, null, null, null, 2, null],
+            [null, null, null, null, null, 1, null],
+            [null, null, 4, null, null, 7, null],
+            [5, null, null, 8, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 9, null, null, null],
+            [null, null, null, null, null, 6, null],
+          ],
+        },
+        {
+          round_id: 64,
+          grid: [
+            [null, null, 4, null, null, null, null],
+            [null, null, null, 3, null, null, null],
+            [null, null, null, null, null, null, 2],
+            [null, 5, null, null, null, null, null],
+            [null, null, null, null, 1, null, null],
+            [6, null, null, null, null, 9, null],
+            [null, null, null, 7, null, 8, null],
+          ],
+        },
+        {
+          round_id: 65,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [null, null, 8, null, null, null, null],
+            [null, null, 9, null, null, null, 3],
+            [null, null, null, null, null, null, 2],
+            [7, 6, null, null, null, null, null],
+            [null, null, null, null, 4, 1, null],
+            [5, null, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 66,
+          grid: [
+            [null, null, null, null, 2, null, null],
+            [null, 1, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [3, 6, null, 5, null, null, null],
+            [null, null, 8, null, null, null, null],
+            [null, 7, null, null, null, 9, null],
+            [null, 4, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 67,
+          grid: [
+            [null, null, null, null, 4, null, null],
+            [null, 2, null, null, null, null, null],
+            [null, null, null, null, 5, null, null],
+            [null, null, 3, null, null, 6, null],
+            [1, null, null, null, 7, null, null],
+            [null, null, null, null, null, 8, null],
+            [null, null, 9, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 68,
+          grid: [
+            [null, 7, null, null, null, null, null],
+            [null, null, 9, null, null, 1, null],
+            [null, null, null, null, null, 2, null],
+            [null, null, null, null, 3, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 8, null, null, null],
+            [6, null, null, 5, 4, null, null],
+          ],
+        },
+        {
+          round_id: 69,
+          grid: [
+            [null, null, 2, null, 1, null, null],
+            [null, 7, null, null, null, null, null],
+            [null, null, null, null, null, null, 6],
+            [null, 8, null, null, null, 9, null],
+            [3, null, 5, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, 4, null, null],
+          ],
+        },
+        {
+          round_id: 70,
+          grid: [
+            [null, null, null, 2, null, null, 3],
+            [null, null, null, null, null, null, null],
+            [9, null, 1, null, null, null, null],
+            [null, null, null, 5, null, null, null],
+            [null, null, null, 6, null, null, null],
+            [null, null, null, null, null, 4, null],
+            [8, null, null, null, 7, null, null],
+          ],
+        },
+        {
+          round_id: 71,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [2, null, null, null, 9, null, null],
+            [null, null, 6, 8, null, null, 7],
+            [null, null, 5, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, 4, null, null],
+            [1, 3, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 72,
+          grid: [
+            [2, null, null, null, null, null, null],
+            [null, null, null, null, null, 3, null],
+            [null, null, null, 4, null, null, null],
+            [null, null, 7, null, 6, null, null],
+            [null, null, null, 8, null, null, 5],
+            [null, 1, null, null, null, null, null],
+            [null, null, null, 9, null, null, null],
+          ],
+        },
+        {
+          round_id: 73,
+          grid: [
+            [9, null, null, null, 1, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 7, 8, null, null],
+            [null, 6, null, null, null, null, null],
+            [null, null, null, 3, 4, 5, 2],
+            [null, null, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 74,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [3, null, 8, null, null, null, 9],
+            [null, null, null, null, null, null, null],
+            [null, 4, null, null, null, null, null],
+            [null, null, null, null, null, null, 7],
+            [null, 1, null, null, 6, null, null],
+            [2, null, null, null, null, 5, null],
+          ],
+        },
+        {
+          round_id: 75,
+          grid: [
+            [null, null, 6, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 5, null, 4, null, 7],
+            [null, null, null, null, null, null, null],
+            [3, null, null, null, 2, null, 8],
+            [null, null, null, null, null, 9, null],
+            [null, null, 1, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 76,
+          grid: [
+            [null, 4, null, null, 3, 2, null],
+            [null, null, null, 8, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, 9, null, null, null, null, null],
+            [null, null, null, null, 1, null, null],
+            [null, null, null, 7, null, null, null],
+            [null, 5, null, null, 6, null, null],
+          ],
+        },
+        {
+          round_id: 77,
+          grid: [
+            [9, null, null, null, 5, null, null],
+            [null, null, null, null, 4, null, 2],
+            [null, null, null, null, 3, null, null],
+            [null, null, null, null, null, null, null],
+            [null, 8, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [7, null, null, 6, 1, null, null],
+          ],
+        },
+        {
+          round_id: 78,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, 5, 2],
+            [3, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, 6, 1],
+            [null, 4, null, 8, 9, null, null],
+            [null, null, null, 7, null, null, null],
+          ],
+        },
+        {
+          round_id: 79,
+          grid: [
+            [null, null, 9, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [5, null, null, null, null, 8, 7],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, 3, 2, null],
+            [null, null, 6, null, null, 1, null],
+            [null, 4, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 80,
+          grid: [
+            [3, 4, null, null, 9, null, null],
+            [null, 5, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 6, 7, null, 1, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, 8, null, null],
+            [null, null, null, 2, null, null, null],
+          ],
+        },
+        {
+          round_id: 81,
+          grid: [
+            [null, 2, null, null, null, null, null],
+            [null, null, null, null, null, null, 4],
+            [null, null, null, 6, 7, null, null],
+            [null, null, null, null, 8, 9, null],
+            [null, null, 5, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [1, null, null, null, null, null, 3],
+          ],
+        },
+        {
+          round_id: 82,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, 9, null, null, 6, null, 7],
+            [null, null, null, null, null, 1, null],
+            [null, 8, null, null, null, null, null],
+            [null, 3, null, 4, null, 5, null],
+            [null, null, null, null, null, null, 2],
+          ],
+        },
+        {
+          round_id: 83,
+          grid: [
+            [null, 9, null, null, 4, null, null],
+            [8, null, null, null, null, null, null],
+            [null, null, 3, null, null, null, null],
+            [7, null, null, null, null, null, null],
+            [null, null, 1, null, 2, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 6, null, 5, null],
+          ],
+        },
+        {
+          round_id: 84,
+          grid: [
+            [null, null, null, 5, null, null, null],
+            [4, null, null, null, 6, null, null],
+            [null, null, null, 7, null, null, null],
+            [null, null, null, null, null, null, 8],
+            [null, null, 9, null, 1, 2, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, 3, null, null],
+          ],
+        },
+        {
+          round_id: 85,
+          grid: [
+            [null, null, 4, null, null, null, 1],
+            [null, null, null, null, null, 3, null],
+            [null, null, 7, null, null, null, null],
+            [null, null, null, 9, null, null, null],
+            [null, 6, null, null, null, null, null],
+            [5, null, null, null, null, null, 2],
+            [null, null, null, 8, null, null, null],
+          ],
+        },
+        {
+          round_id: 86,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [8, null, null, null, null, null, 6],
+            [null, null, null, null, 7, null, null],
+            [null, null, null, 9, null, null, null],
+            [1, null, null, null, null, null, null],
+            [2, null, null, null, null, null, null],
+            [null, null, 3, 4, 5, null, null],
+          ],
+        },
+        {
+          round_id: 87,
+          grid: [
+            [5, null, null, null, null, null, null],
+            [null, null, null, null, null, 6, null],
+            [1, null, null, null, null, 8, null],
+            [null, null, 7, null, null, null, null],
+            [null, 4, null, null, null, 9, null],
+            [null, null, null, null, null, null, 3],
+            [null, null, 2, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 88,
+          grid: [
+            [null, null, null, null, 1, null, 2],
+            [null, 7, null, null, null, null, null],
+            [8, null, null, null, 3, null, 4],
+            [null, null, null, 6, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [9, null, null, null, null, null, 5],
+          ],
+        },
+        {
+          round_id: 89,
+          grid: [
+            [null, null, null, null, 7, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, 2, null, null],
+            [null, 8, null, 1, null, 6, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, 5, null],
+            [null, null, 9, null, 3, null, 4],
+          ],
+        },
+        {
+          round_id: 90,
+          grid: [
+            [null, null, null, null, null, null, null],
+            [null, 1, null, 3, null, null, 2],
+            [null, null, null, null, null, null, null],
+            [null, 9, null, null, null, null, 4],
+            [null, null, null, 8, null, null, null],
+            [null, 7, null, null, null, null, null],
+            [null, null, 6, null, null, null, 5],
+          ],
+        },
+        {
+          round_id: 91,
+          grid: [
+            [null, 4, null, null, null, null, null],
+            [3, null, null, null, null, null, 7],
+            [null, null, null, 9, 8, null, null],
+            [2, null, null, null, null, null, null],
+            [null, null, 5, null, null, null, null],
+            [null, 1, null, null, null, null, null],
+            [null, null, 6, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 92,
+          grid: [
+            [null, null, 4, 5, null, null, null],
+            [null, null, null, null, null, 8, 7],
+            [null, 3, null, null, null, null, null],
+            [null, 2, null, null, null, null, null],
+            [null, null, null, null, null, 9, null],
+            [null, null, null, null, 6, null, null],
+            [null, null, 1, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 93,
+          grid: [
+            [null, null, null, null, null, 6, null],
+            [null, 2, null, null, null, null, null],
+            [null, null, null, null, null, null, 7],
+            [null, 1, 3, 5, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 4, null, null, null, 8],
+            [null, null, null, null, null, null, 9],
+          ],
+        },
+        {
+          round_id: 94,
+          grid: [
+            [null, null, null, null, null, null, 9],
+            [null, 1, null, null, null, null, null],
+            [null, 2, null, null, null, null, null],
+            [null, null, null, null, 8, null, null],
+            [3, 6, null, null, null, null, 7],
+            [null, null, null, null, null, null, null],
+            [null, 4, null, null, null, null, 5],
+          ],
+        },
+        {
+          round_id: 95,
+          grid: [
+            [4, null, null, null, null, 5, null],
+            [null, 3, null, null, null, null, null],
+            [2, null, null, null, null, 8, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 9, null, 7, 6],
+            [null, 1, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 96,
+          grid: [
+            [null, null, null, 3, null, null, null],
+            [null, 5, null, null, 2, 1, null],
+            [null, null, null, 4, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 7, null, null, null, null],
+            [6, null, null, null, null, 9, null],
+            [null, null, 8, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 97,
+          grid: [
+            [null, null, null, null, 3, 4, 5],
+            [null, null, 8, 7, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 2, 9, null, null, null],
+            [null, 1, null, null, null, 6, null],
+            [null, null, null, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 98,
+          grid: [
+            [null, null, 9, null, null, null, null],
+            [null, null, null, null, null, 8, null],
+            [1, 2, null, null, null, null, 7],
+            [null, null, null, null, null, 6, null],
+            [null, null, null, null, 3, null, null],
+            [null, null, null, null, null, 5, null],
+            [null, null, null, null, null, null, 4],
+          ],
+        },
+        {
+          round_id: 99,
+          grid: [
+            [6, null, null, 7, 8, null, null],
+            [null, null, null, 9, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, 5, null, null, null, null],
+            [null, null, null, 3, 1, null, null],
+            [null, null, null, null, null, null, 2],
+            [null, null, 4, null, null, null, null],
+          ],
+        },
+        {
+          round_id: 100,
+          grid: [
+            [null, null, null, 6, null, null, null],
+            [null, 9, 8, null, null, null, null],
+            [null, null, null, null, null, null, 1],
+            [null, null, null, null, null, null, null],
+            [null, 7, null, null, null, 3, 2],
+            [null, null, 5, null, null, null, null],
+            [null, null, null, 4, null, null, null],
+          ],
+        },
       ];
+
+      console.log(
+        "✓ Данные уровней загружены:",
+        gameDataJSON.length,
+        "уровней"
+      );
+
+      const canvas = document.getElementById("game-canvas");
+      const ctx = canvas.getContext("2d");
+      const undoBtn = document.getElementById("undo-btn");
+      const clearBtn = document.getElementById("clear-btn");
+      const messageDiv = document.getElementById("message");
+      const levelSpan = document.getElementById("current-level");
+
+      console.log("✓ DOM элементы получены");
+
+      const GRID_SIZE = 7;
+      const CELL_SIZE = 70;
+      const AD_FORMAT = "interstitial";
+      const STORAGE_KEY = "lines_of_mind_level";
+
+      let gameData = [];
+      let currentRound = 0;
+      let currentGrid = [];
+      let path = [];
+      let isDrawing = false;
+      let numbers = [];
+      let gameBlocked = false;
+      let errorSegmentIndex = -1;
+      let adCheckIntervalId = null;
+
+      function isBridgeAvailable() {
+        const available =
+          typeof window !== "undefined" &&
+          window.vkBridge &&
+          typeof window.vkBridge.send === "function";
+        console.log("VK Bridge доступен?", available);
+        return available;
+      }
+
+      async function checkNativeAds() {
+        if (!isBridgeAvailable()) {
+          return;
+        }
+
+        try {
+          await window.vkBridge.send("VKWebAppCheckNativeAds", {
+            ad_format: AD_FORMAT,
+          });
+        } catch (error) {
+          console.error("Не удалось выполнить VKWebAppCheckNativeAds", error);
+        }
+      }
+
+      async function showInterstitialAd() {
+        if (!isBridgeAvailable()) {
+          return;
+        }
+
+        try {
+          const response = await window.vkBridge.send("VKWebAppShowNativeAds", {
+            ad_format: AD_FORMAT,
+          });
+
+          if (!response?.result) {
+            console.warn("Показ interstitial-рекламы не удался", response);
+          }
+        } catch (error) {
+          console.error("Ошибка при показе interstitial-рекламы", error);
+        }
+      }
+
+      async function loadSavedLevel() {
+        if (!isBridgeAvailable()) {
+          console.log("⚠ VK Storage недоступен, начинаем с уровня 1");
+          return 1;
+        }
+
+        try {
+          const response = await Promise.race([
+            window.vkBridge.send("VKWebAppStorageGet", {
+              keys: [STORAGE_KEY],
+            }),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("Timeout")), 2000)
+            ),
+          ]);
+
+          if (response.keys && response.keys.length > 0) {
+            const savedLevel = parseInt(response.keys[0].value, 10);
+            if (!isNaN(savedLevel) && savedLevel >= 1 && savedLevel <= 100) {
+              console.log("Загружен сохранённый уровень:", savedLevel);
+              return savedLevel;
+            }
+          }
+        } catch (error) {
+          console.error(
+            "Ошибка при загрузке уровня из VK Storage (таймаут или ошибка):",
+            error.message
+          );
+        }
+
+        console.log("Начинаем с уровня 1 (сохранение не найдено или ошибка)");
+        return 1;
+      }
+
+      async function saveCurrentLevel(level) {
+        if (!isBridgeAvailable()) {
+          console.log("⚠ VK Storage недоступен, уровень не сохранён");
+          return;
+        }
+
+        try {
+          await Promise.race([
+            window.vkBridge.send("VKWebAppStorageSet", {
+              key: STORAGE_KEY,
+              value: level.toString(),
+            }),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("Timeout")), 2000)
+            ),
+          ]);
+          console.log("Уровень сохранён:", level);
+        } catch (error) {
+          console.error(
+            "Ошибка при сохранении уровня в VK Storage (таймаут или ошибка):",
+            error.message
+          );
+        }
+      }
+
+      async function initAds() {
+        if (!isBridgeAvailable()) {
+          console.log("⚠ VK Bridge недоступен (это нормально для CodeSandbox)");
+          return;
+        }
+
+        try {
+          await Promise.race([
+            window.vkBridge.send("VKWebAppInit"),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("Timeout")), 2000)
+            ),
+          ]);
+        } catch (error) {
+          console.error(
+            "VKWebAppInit завершился с ошибкой или таймаут:",
+            error.message
+          );
+          return;
+        }
+
+        await checkNativeAds();
+
+        if (adCheckIntervalId === null) {
+          adCheckIntervalId = setInterval(checkNativeAds, 60_000);
+        }
+      }
 
       function loadGameData() {
         gameData = gameDataJSON;
+        console.log("✓ Игровые данные загружены в память");
       }
 
       async function loadLevel(roundId) {
+        console.log("→ Загрузка уровня", roundId);
         const round = gameData.find((r) => r.round_id === roundId);
         if (!round) {
           messageDiv.textContent = "Поздравляем! Вы прошли все уровни!";
@@ -419,6 +1547,7 @@
 
         clearGame();
         drawGrid();
+        console.log("✓ Уровень", roundId, "загружен и отрисован");
       }
 
       function clearGame() {
@@ -432,7 +1561,6 @@
       function drawGrid() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Рисуем фон для незанятых клеток
         for (let row = 0; row < GRID_SIZE; row++) {
           for (let col = 0; col < GRID_SIZE; col++) {
             const isVisited = path.some((p) => p.row === row && p.col === col);
@@ -448,7 +1576,6 @@
           }
         }
 
-        // Рисуем сетку
         ctx.strokeStyle = "#ddd";
         ctx.lineWidth = 1;
         for (let i = 0; i <= GRID_SIZE; i++) {
@@ -576,19 +1703,10 @@
       }
 
       function checkVictoryCondition() {
-        // Проверяем, все ли клетки заполнены
         if (path.length !== GRID_SIZE * GRID_SIZE) {
-          console.log(
-            "Победа НЕ достигнута: заполнено " +
-              path.length +
-              " из " +
-              GRID_SIZE * GRID_SIZE +
-              " клеток"
-          );
           return false;
         }
 
-        // Собираем все числа из пути
         const numbersInPath = new Set();
         for (const p of path) {
           const val = currentGrid[p.row][p.col];
@@ -597,7 +1715,6 @@
           }
         }
 
-        // Проверяем наличие всех чисел от 1 до 9
         const missingNumbers = [];
         for (let i = 1; i <= 9; i++) {
           if (!numbersInPath.has(i)) {
@@ -606,14 +1723,10 @@
         }
 
         if (missingNumbers.length > 0) {
-          console.log(
-            "Победа НЕ достигнута: отсутствуют числа " +
-              missingNumbers.join(", ")
-          );
           return false;
         }
 
-        console.log("ПОБЕДА ДОСТИГНУТА!");
+        console.log("🎉 ПОБЕДА!");
         return true;
       }
 
@@ -656,7 +1769,6 @@
         path.push(cell);
         drawGrid();
 
-        // Проверяем победу на каждом ходе
         const isVictory = checkVictoryCondition();
 
         if (isVictory) {
@@ -747,10 +1859,25 @@
       });
 
       async function initGame() {
+        console.log("→ Инициализация игры...");
+
+        console.log("→ Шаг 1: Инициализация рекламы...");
         await initAds();
+        console.log("✓ Шаг 1 завершён");
+
+        console.log("→ Шаг 2: Загрузка данных игры...");
         loadGameData();
+        console.log("✓ Шаг 2 завершён");
+
+        console.log("→ Шаг 3: Загрузка сохранённого уровня...");
         const savedLevel = await loadSavedLevel();
-        loadLevel(savedLevel);
+        console.log("✓ Шаг 3 завершён, уровень:", savedLevel);
+
+        console.log("→ Шаг 4: Загрузка уровня", savedLevel);
+        await loadLevel(savedLevel);
+        console.log("✓ Шаг 4 завершён");
+
+        console.log("✅ Игра полностью загружена и готова!");
       }
 
       initGame();
