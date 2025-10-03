@@ -166,11 +166,51 @@
 
       let gameData = [];
       let currentRound = 0;
-      let currentGrid = [];
+      function createEmptyGrid() {
+        return Array.from({ length: GRID_SIZE }, () =>
+          Array.from({ length: GRID_SIZE }, () => null)
+        );
+      }
+
+      function sanitizeGrid(gridData) {
+        const sanitizedGrid = createEmptyGrid();
+
+        if (!Array.isArray(gridData)) {
+          return sanitizedGrid;
+        }
+
+        for (let row = 0; row < GRID_SIZE; row++) {
+          const sourceRow = Array.isArray(gridData[row]) ? gridData[row] : [];
+
+          for (let col = 0; col < GRID_SIZE; col++) {
+            const rawValue = sourceRow[col];
+
+            if (typeof rawValue === "number" && Number.isFinite(rawValue)) {
+              sanitizedGrid[row][col] = rawValue;
+            } else if (typeof rawValue === "string") {
+              const parsed = Number.parseInt(rawValue, 10);
+              sanitizedGrid[row][col] = Number.isFinite(parsed) ? parsed : null;
+            } else {
+              sanitizedGrid[row][col] = null;
+            }
+          }
+        }
+
+        return sanitizedGrid;
+      }
+
+      function setControlsDisabled(isDisabled) {
+        undoBtn.disabled = isDisabled;
+        clearBtn.disabled = isDisabled;
+      }
+
+      let currentGrid = createEmptyGrid();
+
+      setControlsDisabled(true);
       let path = [];
       let isDrawing = false;
       let numbers = [];
-      let gameBlocked = false;
+      let gameBlocked = true;
       let errorSegmentIndex = -1;
       let adCheckIntervalId = null;
 
@@ -268,148 +308,70 @@
         }
       }
 
-      const gameDataJSON = [
-        {
-          round_id: 1,
-          grid: [
-            [1, null, null, null, null, null, 2],
-            [null, 4, null, 3, null, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, 9, 8, 7, null, 6],
-            [null, null, null, null, null, null, null],
-            [null, null, 5, null, null, null, null],
-          ],
-        },
-        {
-          round_id: 2,
-          grid: [
-            [1, null, null, null, null, null, null],
-            [null, null, null, null, 8, null, 6],
-            [null, null, null, 9, null, 7, null],
-            [null, null, null, 5, null, null, null],
-            [null, null, null, null, 3, null, 4],
-            [null, null, null, null, null, null, 2],
-            [null, null, null, null, null, null, null],
-          ],
-        },
-        {
-          round_id: 3,
-          grid: [
-            [1, null, null, null, null, null, 2],
-            [null, null, null, null, null, 6, null],
-            [null, null, 7, null, null, null, 3],
-            [null, null, null, null, null, 8, null],
-            [null, null, null, null, null, null, null],
-            [null, 9, null, null, null, null, null],
-            [5, null, null, null, 4, null, null],
-          ],
-        },
-        {
-          round_id: 4,
-          grid: [
-            [null, 8, null, 7, null, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, null, 6, null, 5, null],
-            [null, null, null, null, null, null, 4],
-            [null, 9, null, 3, null, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, 2, null, 1, null, null],
-          ],
-        },
-        {
-          round_id: 5,
-          grid: [
-            [null, null, null, null, null, null, null],
-            [5, null, null, null, null, 4, null],
-            [null, null, null, 8, 3, null, null],
-            [null, null, null, null, null, null, 2],
-            [null, null, null, 9, 1, null, null],
-            [null, null, null, 7, null, null, null],
-            [null, 6, null, null, null, null, null],
-          ],
-        },
-        {
-          round_id: 6,
-          grid: [
-            [null, 6, null, null, null, null, null],
-            [null, null, 7, 8, null, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, null, null, null, null, null],
-            [5, null, null, 9, null, 3, null],
-            [4, null, null, null, null, null, 2],
-            [null, null, null, null, null, null, 1],
-          ],
-        },
-        {
-          round_id: 7,
-          grid: [
-            [null, null, null, null, null, null, null],
-            [9, null, null, null, null, 8, 7],
-            [1, null, null, null, 6, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, 5, null, null, null, null],
-            [null, 4, null, null, null, null, null],
-            [null, null, 2, 3, null, null, null],
-          ],
-        },
-        {
-          round_id: 8,
-          grid: [
-            [null, null, 9, null, null, null, null],
-            [null, null, 8, null, null, null, null],
-            [null, null, null, 7, null, null, null],
-            [null, null, null, null, null, 3, null],
-            [null, 6, null, null, null, null, null],
-            [4, null, null, null, 5, null, 2],
-            [null, null, null, null, null, null, 1],
-          ],
-        },
-        {
-          round_id: 9,
-          grid: [
-            [null, null, 3, 2, null, null, null],
-            [4, null, null, null, null, null, null],
-            [null, null, 6, null, null, null, null],
-            [null, null, null, null, 8, null, null],
-            [null, null, null, null, null, null, 1],
-            [5, null, null, 7, null, null, null],
-            [null, null, null, null, null, 9, null],
-          ],
-        },
-        {
-          round_id: 10,
-          grid: [
-            [null, null, null, null, 3, null, null],
-            [2, 8, 7, null, null, null, null],
-            [1, null, null, null, null, null, null],
-            [null, null, null, null, null, 6, null],
-            [null, null, 9, null, null, null, null],
-            [5, null, null, null, null, null, 4],
-            [null, null, null, null, null, null, null],
-          ],
-        },
-      ];
+      async function loadGameData() {
+        messageDiv.textContent = "Загрузка уровней...";
+        messageDiv.style.color = "#333";
 
-      function loadGameData() {
-        gameData = gameDataJSON;
+        try {
+          const response = await fetch("./zipround.json", {
+            cache: "no-cache",
+          });
+
+          if (!response.ok) {
+            throw new Error(`Не удалось загрузить zipround.json: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          if (!Array.isArray(data)) {
+            throw new Error("Некорректный формат данных уровней");
+          }
+
+          gameData = data
+            .filter(
+              (round) =>
+                round && typeof round.round_id === "number" && Array.isArray(round.grid)
+            )
+            .map((round) => ({
+              round_id: round.round_id,
+              grid: sanitizeGrid(round.grid),
+            }))
+            .sort((a, b) => a.round_id - b.round_id);
+
+          if (gameData.length === 0) {
+            throw new Error("В zipround.json отсутствуют корректные данные уровней");
+          }
+        } catch (error) {
+          console.error("Ошибка при загрузке данных уровней", error);
+          messageDiv.textContent =
+            "Не удалось загрузить уровни игры. Попробуйте обновить страницу.";
+          messageDiv.style.color = "#f44336";
+          gameBlocked = true;
+          setControlsDisabled(true);
+          currentGrid = createEmptyGrid();
+          drawGrid();
+        }
       }
 
       async function loadLevel(roundId) {
         const round = gameData.find((r) => r.round_id === roundId);
         if (!round) {
           messageDiv.textContent = "Поздравляем! Вы прошли все уровни!";
+          messageDiv.style.color = "#4CAF50";
+          gameBlocked = true;
+          setControlsDisabled(true);
           return;
         }
 
         currentRound = roundId;
-        currentGrid = round.grid;
+        currentGrid = sanitizeGrid(round.grid);
         levelSpan.textContent = roundId;
 
         numbers = [];
         for (let row = 0; row < GRID_SIZE; row++) {
+          const rowValues = currentGrid[row] || [];
           for (let col = 0; col < GRID_SIZE; col++) {
-            const value = currentGrid[row][col];
+            const value = rowValues[col];
             if (value !== null) {
               numbers.push({ value, row, col });
             }
@@ -418,7 +380,7 @@
         numbers.sort((a, b) => a.value - b.value);
 
         clearGame();
-        drawGrid();
+        setControlsDisabled(false);
       }
 
       function clearGame() {
@@ -505,8 +467,9 @@
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         for (let row = 0; row < GRID_SIZE; row++) {
+          const rowValues = currentGrid[row] || [];
           for (let col = 0; col < GRID_SIZE; col++) {
-            const value = currentGrid[row][col];
+            const value = rowValues[col];
             if (value !== null) {
               const pathIndex = path.findIndex(
                 (p) => p.row === row && p.col === col
@@ -567,7 +530,8 @@
 
         let maxFound = 0;
         for (const cell of path) {
-          const value = currentGrid[cell.row][cell.col];
+          const rowValues = currentGrid[cell.row] || [];
+          const value = rowValues[cell.col];
           if (value !== null && value > maxFound) {
             maxFound = value;
           }
@@ -591,7 +555,8 @@
         // Собираем все числа из пути
         const numbersInPath = new Set();
         for (const p of path) {
-          const val = currentGrid[p.row][p.col];
+          const rowValues = currentGrid[p.row] || [];
+          const val = rowValues[p.col];
           if (val !== null) {
             numbersInPath.add(val);
           }
@@ -621,7 +586,8 @@
         if (gameBlocked) return false;
 
         if (path.length === 0) {
-          const value = currentGrid[cell.row][cell.col];
+          const rowValues = currentGrid[cell.row] || [];
+          const value = rowValues[cell.col];
           if (value !== 1) {
             return false;
           }
@@ -638,10 +604,11 @@
           return false;
         }
 
-        const cellValue = currentGrid[cell.row][cell.col];
+        const rowValues = currentGrid[cell.row] || [];
+        const cellValue = rowValues[cell.col];
         const expectedNum = getExpectedNumber();
 
-        if (cellValue !== null) {
+        if (cellValue !== null && typeof cellValue !== "undefined") {
           if (cellValue !== expectedNum) {
             errorSegmentIndex = path.length - 1;
             path.push(cell);
@@ -663,6 +630,7 @@
           gameBlocked = true;
           messageDiv.textContent = "Уровень пройден! Загружаем следующий...";
           messageDiv.style.color = "#4CAF50";
+          setControlsDisabled(true);
 
           const nextLevel = currentRound + 1;
           saveCurrentLevel(nextLevel);
@@ -748,9 +716,27 @@
 
       async function initGame() {
         await initAds();
-        loadGameData();
+        await loadGameData();
+
+        if (gameData.length === 0) {
+          return;
+        }
+
         const savedLevel = await loadSavedLevel();
-        loadLevel(savedLevel);
+        const roundIds = gameData.map((round) => round.round_id);
+        const minRoundId = Math.min(...roundIds);
+        const maxRoundId = Math.max(...roundIds);
+
+        let initialRoundId = savedLevel;
+        if (Number.isNaN(initialRoundId)) {
+          initialRoundId = minRoundId;
+        } else if (initialRoundId < minRoundId) {
+          initialRoundId = minRoundId;
+        } else if (initialRoundId > maxRoundId) {
+          initialRoundId = minRoundId;
+        }
+
+        loadLevel(initialRoundId);
       }
 
       initGame();
