@@ -268,131 +268,37 @@
         }
       }
 
-      const gameDataJSON = [
-        {
-          round_id: 1,
-          grid: [
-            [1, null, null, null, null, null, 2],
-            [null, 4, null, 3, null, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, 9, 8, 7, null, 6],
-            [null, null, null, null, null, null, null],
-            [null, null, 5, null, null, null, null],
-          ],
-        },
-        {
-          round_id: 2,
-          grid: [
-            [1, null, null, null, null, null, null],
-            [null, null, null, null, 8, null, 6],
-            [null, null, null, 9, null, 7, null],
-            [null, null, null, 5, null, null, null],
-            [null, null, null, null, 3, null, 4],
-            [null, null, null, null, null, null, 2],
-            [null, null, null, null, null, null, null],
-          ],
-        },
-        {
-          round_id: 3,
-          grid: [
-            [1, null, null, null, null, null, 2],
-            [null, null, null, null, null, 6, null],
-            [null, null, 7, null, null, null, 3],
-            [null, null, null, null, null, 8, null],
-            [null, null, null, null, null, null, null],
-            [null, 9, null, null, null, null, null],
-            [5, null, null, null, 4, null, null],
-          ],
-        },
-        {
-          round_id: 4,
-          grid: [
-            [null, 8, null, 7, null, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, null, 6, null, 5, null],
-            [null, null, null, null, null, null, 4],
-            [null, 9, null, 3, null, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, 2, null, 1, null, null],
-          ],
-        },
-        {
-          round_id: 5,
-          grid: [
-            [null, null, null, null, null, null, null],
-            [5, null, null, null, null, 4, null],
-            [null, null, null, 8, 3, null, null],
-            [null, null, null, null, null, null, 2],
-            [null, null, null, 9, 1, null, null],
-            [null, null, null, 7, null, null, null],
-            [null, 6, null, null, null, null, null],
-          ],
-        },
-        {
-          round_id: 6,
-          grid: [
-            [null, 6, null, null, null, null, null],
-            [null, null, 7, 8, null, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, null, null, null, null, null],
-            [5, null, null, 9, null, 3, null],
-            [4, null, null, null, null, null, 2],
-            [null, null, null, null, null, null, 1],
-          ],
-        },
-        {
-          round_id: 7,
-          grid: [
-            [null, null, null, null, null, null, null],
-            [9, null, null, null, null, 8, 7],
-            [1, null, null, null, 6, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, 5, null, null, null, null],
-            [null, 4, null, null, null, null, null],
-            [null, null, 2, 3, null, null, null],
-          ],
-        },
-        {
-          round_id: 8,
-          grid: [
-            [null, null, 9, null, null, null, null],
-            [null, null, 8, null, null, null, null],
-            [null, null, null, 7, null, null, null],
-            [null, null, null, null, null, 3, null],
-            [null, 6, null, null, null, null, null],
-            [4, null, null, null, 5, null, 2],
-            [null, null, null, null, null, null, 1],
-          ],
-        },
-        {
-          round_id: 9,
-          grid: [
-            [null, null, 3, 2, null, null, null],
-            [4, null, null, null, null, null, null],
-            [null, null, 6, null, null, null, null],
-            [null, null, null, null, 8, null, null],
-            [null, null, null, null, null, null, 1],
-            [5, null, null, 7, null, null, null],
-            [null, null, null, null, null, 9, null],
-          ],
-        },
-        {
-          round_id: 10,
-          grid: [
-            [null, null, null, null, 3, null, null],
-            [2, 8, 7, null, null, null, null],
-            [1, null, null, null, null, null, null],
-            [null, null, null, null, null, 6, null],
-            [null, null, 9, null, null, null, null],
-            [5, null, null, null, null, null, 4],
-            [null, null, null, null, null, null, null],
-          ],
-        },
-      ];
+      async function loadGameData() {
+        try {
+          const response = await fetch("zipround.json", {
+            cache: "no-cache",
+          });
 
-      function loadGameData() {
-        gameData = gameDataJSON;
+          if (!response.ok) {
+            throw new Error(`Не удалось загрузить zipround.json: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          if (!Array.isArray(data)) {
+            throw new Error("Некорректный формат данных уровней");
+          }
+
+          gameData = data
+            .filter(
+              (round) =>
+                round &&
+                typeof round.round_id === "number" &&
+                Array.isArray(round.grid)
+            )
+            .sort((a, b) => a.round_id - b.round_id);
+        } catch (error) {
+          console.error("Ошибка при загрузке данных уровней", error);
+          messageDiv.textContent =
+            "Не удалось загрузить уровни игры. Попробуйте обновить страницу.";
+          messageDiv.style.color = "#f44336";
+          gameBlocked = true;
+        }
       }
 
       async function loadLevel(roundId) {
@@ -748,9 +654,27 @@
 
       async function initGame() {
         await initAds();
-        loadGameData();
+        await loadGameData();
+
+        if (gameData.length === 0) {
+          return;
+        }
+
         const savedLevel = await loadSavedLevel();
-        loadLevel(savedLevel);
+        const roundIds = gameData.map((round) => round.round_id);
+        const minRoundId = Math.min(...roundIds);
+        const maxRoundId = Math.max(...roundIds);
+
+        let initialRoundId = savedLevel;
+        if (Number.isNaN(initialRoundId)) {
+          initialRoundId = minRoundId;
+        } else if (initialRoundId < minRoundId) {
+          initialRoundId = minRoundId;
+        } else if (initialRoundId > maxRoundId) {
+          initialRoundId = minRoundId;
+        }
+
+        loadLevel(initialRoundId);
       }
 
       initGame();
