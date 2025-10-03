@@ -432,6 +432,23 @@
       function drawGrid() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // Рисуем фон для незанятых клеток
+        for (let row = 0; row < GRID_SIZE; row++) {
+          for (let col = 0; col < GRID_SIZE; col++) {
+            const isVisited = path.some((p) => p.row === row && p.col === col);
+            if (!isVisited) {
+              ctx.fillStyle = "#f5f5f5";
+              ctx.fillRect(
+                col * CELL_SIZE,
+                row * CELL_SIZE,
+                CELL_SIZE,
+                CELL_SIZE
+              );
+            }
+          }
+        }
+
+        // Рисуем сетку
         ctx.strokeStyle = "#ddd";
         ctx.lineWidth = 1;
         for (let i = 0; i <= GRID_SIZE; i++) {
