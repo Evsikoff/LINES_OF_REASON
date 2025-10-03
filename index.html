@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ЛИНИИ РАЗУМА</title>
+    <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -160,6 +161,7 @@
 
       const GRID_SIZE = 7;
       const CELL_SIZE = 70;
+      const AD_FORMAT = "interstitial";
       let gameData = [];
       let currentRound = 0;
       let currentGrid = [];
@@ -168,6 +170,61 @@
       let numbers = [];
       let gameBlocked = false;
       let errorSegmentIndex = -1; // индекс начала ошибочного сегмента
+      let adCheckIntervalId = null;
+
+      function isBridgeAvailable() {
+        return typeof window !== "undefined" && window.vkBridge;
+      }
+
+      async function checkNativeAds() {
+        if (!isBridgeAvailable()) {
+          return;
+        }
+
+        try {
+          await window.vkBridge.send("VKWebAppCheckNativeAds", {
+            ad_format: AD_FORMAT,
+          });
+        } catch (error) {
+          console.error("Не удалось выполнить VKWebAppCheckNativeAds", error);
+        }
+      }
+
+      async function showInterstitialAd() {
+        if (!isBridgeAvailable()) {
+          return;
+        }
+
+        try {
+          const response = await window.vkBridge.send("VKWebAppShowNativeAds", {
+            ad_format: AD_FORMAT,
+          });
+
+          if (!response?.result) {
+            console.warn("Показ interstitial-рекламы не удался", response);
+          }
+        } catch (error) {
+          console.error("Ошибка при показе interstitial-рекламы", error);
+        }
+      }
+
+      async function initAds() {
+        if (!isBridgeAvailable()) {
+          return;
+        }
+
+        try {
+          await window.vkBridge.send("VKWebAppInit");
+        } catch (error) {
+          console.error("VKWebAppInit завершился с ошибкой", error);
+        }
+
+        await checkNativeAds();
+
+        if (adCheckIntervalId === null) {
+          adCheckIntervalId = setInterval(checkNativeAds, 60_000);
+        }
+      }
 
       // Данные игры
       const gameDataJSON = [
@@ -1621,7 +1678,9 @@
             messageDiv.textContent = "Уровень пройден! Загружаем следующий...";
             messageDiv.style.color = "#4CAF50";
             setTimeout(() => {
-              loadLevel(currentRound + 1);
+              showInterstitialAd().finally(() => {
+                loadLevel(currentRound + 1);
+              });
             }, 1500);
             return true;
           }
@@ -1690,13 +1749,18 @@
           messageDiv.textContent = "";
           drawGrid();
         }
+
+        showInterstitialAd();
       });
 
       clearBtn.addEventListener("click", () => {
         clearGame();
+
+        showInterstitialAd();
       });
 
       // Запуск игры
+      initAds();
       loadGameData();
     </script>
   </body>
