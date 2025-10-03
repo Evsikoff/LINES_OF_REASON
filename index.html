@@ -166,11 +166,51 @@
 
       let gameData = [];
       let currentRound = 0;
-      let currentGrid = [];
+      function createEmptyGrid() {
+        return Array.from({ length: GRID_SIZE }, () =>
+          Array.from({ length: GRID_SIZE }, () => null)
+        );
+      }
+
+      function sanitizeGrid(gridData) {
+        const sanitizedGrid = createEmptyGrid();
+
+        if (!Array.isArray(gridData)) {
+          return sanitizedGrid;
+        }
+
+        for (let row = 0; row < GRID_SIZE; row++) {
+          const sourceRow = Array.isArray(gridData[row]) ? gridData[row] : [];
+
+          for (let col = 0; col < GRID_SIZE; col++) {
+            const rawValue = sourceRow[col];
+
+            if (typeof rawValue === "number" && Number.isFinite(rawValue)) {
+              sanitizedGrid[row][col] = rawValue;
+            } else if (typeof rawValue === "string") {
+              const parsed = Number.parseInt(rawValue, 10);
+              sanitizedGrid[row][col] = Number.isFinite(parsed) ? parsed : null;
+            } else {
+              sanitizedGrid[row][col] = null;
+            }
+          }
+        }
+
+        return sanitizedGrid;
+      }
+
+      function setControlsDisabled(isDisabled) {
+        undoBtn.disabled = isDisabled;
+        clearBtn.disabled = isDisabled;
+      }
+
+      let currentGrid = createEmptyGrid();
+
+      setControlsDisabled(true);
       let path = [];
       let isDrawing = false;
       let numbers = [];
-      let gameBlocked = false;
+      let gameBlocked = true;
       let errorSegmentIndex = -1;
       let adCheckIntervalId = null;
 
@@ -269,8 +309,11 @@
       }
 
       async function loadGameData() {
+        messageDiv.textContent = "Загрузка уровней...";
+        messageDiv.style.color = "#333";
+
         try {
-          const response = await fetch("zipround.json", {
+          const response = await fetch("./zipround.json", {
             cache: "no-cache",
           });
 
@@ -287,17 +330,26 @@
           gameData = data
             .filter(
               (round) =>
-                round &&
-                typeof round.round_id === "number" &&
-                Array.isArray(round.grid)
+                round && typeof round.round_id === "number" && Array.isArray(round.grid)
             )
+            .map((round) => ({
+              round_id: round.round_id,
+              grid: sanitizeGrid(round.grid),
+            }))
             .sort((a, b) => a.round_id - b.round_id);
+
+          if (gameData.length === 0) {
+            throw new Error("В zipround.json отсутствуют корректные данные уровней");
+          }
         } catch (error) {
           console.error("Ошибка при загрузке данных уровней", error);
           messageDiv.textContent =
             "Не удалось загрузить уровни игры. Попробуйте обновить страницу.";
           messageDiv.style.color = "#f44336";
           gameBlocked = true;
+          setControlsDisabled(true);
+          currentGrid = createEmptyGrid();
+          drawGrid();
         }
       }
 
@@ -305,17 +357,21 @@
         const round = gameData.find((r) => r.round_id === roundId);
         if (!round) {
           messageDiv.textContent = "Поздравляем! Вы прошли все уровни!";
+          messageDiv.style.color = "#4CAF50";
+          gameBlocked = true;
+          setControlsDisabled(true);
           return;
         }
 
         currentRound = roundId;
-        currentGrid = round.grid;
+        currentGrid = sanitizeGrid(round.grid);
         levelSpan.textContent = roundId;
 
         numbers = [];
         for (let row = 0; row < GRID_SIZE; row++) {
+          const rowValues = currentGrid[row] || [];
           for (let col = 0; col < GRID_SIZE; col++) {
-            const value = currentGrid[row][col];
+            const value = rowValues[col];
             if (value !== null) {
               numbers.push({ value, row, col });
             }
@@ -324,7 +380,7 @@
         numbers.sort((a, b) => a.value - b.value);
 
         clearGame();
-        drawGrid();
+        setControlsDisabled(false);
       }
 
       function clearGame() {
@@ -411,8 +467,9 @@
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         for (let row = 0; row < GRID_SIZE; row++) {
+          const rowValues = currentGrid[row] || [];
           for (let col = 0; col < GRID_SIZE; col++) {
-            const value = currentGrid[row][col];
+            const value = rowValues[col];
             if (value !== null) {
               const pathIndex = path.findIndex(
                 (p) => p.row === row && p.col === col
@@ -473,7 +530,8 @@
 
         let maxFound = 0;
         for (const cell of path) {
-          const value = currentGrid[cell.row][cell.col];
+          const rowValues = currentGrid[cell.row] || [];
+          const value = rowValues[cell.col];
           if (value !== null && value > maxFound) {
             maxFound = value;
           }
@@ -497,7 +555,8 @@
         // Собираем все числа из пути
         const numbersInPath = new Set();
         for (const p of path) {
-          const val = currentGrid[p.row][p.col];
+          const rowValues = currentGrid[p.row] || [];
+          const val = rowValues[p.col];
           if (val !== null) {
             numbersInPath.add(val);
           }
@@ -527,7 +586,8 @@
         if (gameBlocked) return false;
 
         if (path.length === 0) {
-          const value = currentGrid[cell.row][cell.col];
+          const rowValues = currentGrid[cell.row] || [];
+          const value = rowValues[cell.col];
           if (value !== 1) {
             return false;
           }
@@ -544,10 +604,11 @@
           return false;
         }
 
-        const cellValue = currentGrid[cell.row][cell.col];
+        const rowValues = currentGrid[cell.row] || [];
+        const cellValue = rowValues[cell.col];
         const expectedNum = getExpectedNumber();
 
-        if (cellValue !== null) {
+        if (cellValue !== null && typeof cellValue !== "undefined") {
           if (cellValue !== expectedNum) {
             errorSegmentIndex = path.length - 1;
             path.push(cell);
@@ -569,6 +630,7 @@
           gameBlocked = true;
           messageDiv.textContent = "Уровень пройден! Загружаем следующий...";
           messageDiv.style.color = "#4CAF50";
+          setControlsDisabled(true);
 
           const nextLevel = currentRound + 1;
           saveCurrentLevel(nextLevel);
