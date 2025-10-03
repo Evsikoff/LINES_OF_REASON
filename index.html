@@ -1736,9 +1736,17 @@
             gameBlocked = true;
             messageDiv.textContent = "Уровень пройден! Загружаем следующий...";
             messageDiv.style.color = "#4CAF50";
+            const nextRoundId = currentRound + 1;
+            const hasNextRound = gameData.some(
+              (round) => round.round_id === nextRoundId
+            );
+
+            if (hasNextRound) {
+              saveCurrentLevel(nextRoundId);
+            }
             setTimeout(() => {
               showInterstitialAd().finally(() => {
-                loadLevel(currentRound + 1);
+                loadLevel(nextRoundId);
               });
             }, 1500);
             return true;
