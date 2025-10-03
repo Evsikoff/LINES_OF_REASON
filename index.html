@@ -162,6 +162,7 @@
       const GRID_SIZE = 7;
       const CELL_SIZE = 70;
       const AD_FORMAT = "interstitial";
+      const STORAGE_KEY_CURRENT_LEVEL = "lines_of_reason_current_level";
       let gameData = [];
       let currentRound = 0;
       let currentGrid = [];
@@ -223,6 +224,50 @@
 
         if (adCheckIntervalId === null) {
           adCheckIntervalId = setInterval(checkNativeAds, 60_000);
+        }
+      }
+
+      async function getStoredLevel() {
+        if (!isBridgeAvailable()) {
+          return null;
+        }
+
+        try {
+          const response = await window.vkBridge.send("VKWebAppStorageGet", {
+            keys: [STORAGE_KEY_CURRENT_LEVEL],
+          });
+
+          if (response?.keys && Array.isArray(response.keys)) {
+            const storedEntry = response.keys.find(
+              (entry) => entry.key === STORAGE_KEY_CURRENT_LEVEL
+            );
+
+            if (storedEntry && storedEntry.value) {
+              const parsedValue = parseInt(storedEntry.value, 10);
+              if (Number.isInteger(parsedValue) && parsedValue >= 1) {
+                return parsedValue;
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Не удалось получить уровень из VK Storage", error);
+        }
+
+        return null;
+      }
+
+      async function saveCurrentLevel(roundId) {
+        if (!isBridgeAvailable()) {
+          return;
+        }
+
+        try {
+          await window.vkBridge.send("VKWebAppStorageSet", {
+            key: STORAGE_KEY_CURRENT_LEVEL,
+            value: String(roundId),
+          });
+        } catch (error) {
+          console.error("Не удалось сохранить уровень в VK Storage", error);
         }
       }
 
@@ -1430,9 +1475,22 @@
         },
       ];
 
-      function loadGameData() {
+      async function loadGameData() {
         gameData = gameDataJSON;
-        loadLevel(1);
+        const storedLevel = await getStoredLevel();
+        let levelToLoad = 1;
+
+        if (storedLevel !== null) {
+          const hasStoredRound = gameData.some(
+            (round) => round.round_id === storedLevel
+          );
+
+          if (hasStoredRound) {
+            levelToLoad = storedLevel;
+          }
+        }
+
+        loadLevel(levelToLoad);
       }
 
       function loadLevel(roundId) {
@@ -1445,6 +1503,7 @@
         currentRound = roundId;
         currentGrid = round.grid;
         levelSpan.textContent = roundId;
+        saveCurrentLevel(roundId);
 
         // Найти все числа и их позиции
         numbers = [];
