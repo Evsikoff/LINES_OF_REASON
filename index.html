@@ -171,6 +171,73 @@
       let gameBlocked = false;
       let errorSegmentIndex = -1; // индекс начала ошибочного сегмента
       let adCheckIntervalId = null;
+      const SEGMENT_ANIMATION_DURATION = 200;
+      let displayedPathLength = 0;
+      let animationFrameId = null;
+      let animationStartLength = 0;
+      let animationTargetLength = 0;
+      let animationStartTime = null;
+      let animationTotalDuration = SEGMENT_ANIMATION_DURATION;
+
+      function updateButtonsState() {
+        const hasDrawn = path.length > 0;
+        undoBtn.disabled = !hasDrawn;
+        clearBtn.disabled = !hasDrawn;
+      }
+
+      function resetPathAnimation() {
+        if (animationFrameId !== null) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+        animationStartTime = null;
+        animationStartLength = path.length;
+        animationTargetLength = path.length;
+        displayedPathLength = path.length;
+        animationTotalDuration = SEGMENT_ANIMATION_DURATION;
+      }
+
+      function startPathAnimation() {
+        if (animationFrameId !== null) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+
+        animationStartLength = displayedPathLength;
+        animationTargetLength = path.length;
+        animationStartTime = null;
+
+        const lengthDelta = animationTargetLength - animationStartLength;
+        if (animationTargetLength <= 1 || lengthDelta <= 0) {
+          displayedPathLength = animationTargetLength;
+          drawGrid();
+          return;
+        }
+
+        animationTotalDuration =
+          SEGMENT_ANIMATION_DURATION * Math.max(1, lengthDelta);
+        animationFrameId = requestAnimationFrame(stepPathAnimation);
+      }
+
+      function stepPathAnimation(timestamp) {
+        if (animationStartTime === null) {
+          animationStartTime = timestamp;
+        }
+
+        const elapsed = timestamp - animationStartTime;
+        const progress = Math.min(elapsed / animationTotalDuration, 1);
+        displayedPathLength =
+          animationStartLength +
+          (animationTargetLength - animationStartLength) * progress;
+
+        drawGrid();
+
+        if (progress < 1) {
+          animationFrameId = requestAnimationFrame(stepPathAnimation);
+        } else {
+          animationFrameId = null;
+        }
+      }
 
       function isBridgeAvailable() {
         return typeof window !== "undefined" && window.vkBridge;
@@ -1459,7 +1526,6 @@
         numbers.sort((a, b) => a.value - b.value);
 
         clearGame();
-        drawGrid();
       }
 
       function clearGame() {
@@ -1467,6 +1533,8 @@
         gameBlocked = false;
         errorSegmentIndex = -1;
         messageDiv.textContent = "";
+        resetPathAnimation();
+        updateButtonsState();
         drawGrid();
       }
 
@@ -1489,27 +1557,56 @@
         }
 
         // Рисуем путь
+        let effectiveLength = 0;
         if (path.length > 0) {
+          effectiveLength = Math.min(displayedPathLength, path.length);
+          const blueLength =
+            errorSegmentIndex === -1
+              ? effectiveLength
+              : Math.min(effectiveLength, errorSegmentIndex + 1);
+
           ctx.lineCap = "round";
           ctx.lineJoin = "round";
           ctx.lineWidth = 4;
 
           // Рисуем основной путь синим
-          if (errorSegmentIndex === -1 || errorSegmentIndex > 0) {
+          if (blueLength > 0) {
             ctx.strokeStyle = "#2196F3";
             ctx.beginPath();
             ctx.moveTo(
               path[0].col * CELL_SIZE + CELL_SIZE / 2,
               path[0].row * CELL_SIZE + CELL_SIZE / 2
             );
-            const endIndex =
-              errorSegmentIndex === -1 ? path.length : errorSegmentIndex + 1;
-            for (let i = 1; i < endIndex; i++) {
+            const fullPoints = Math.min(
+              Math.floor(blueLength),
+              path.length
+            );
+            for (let i = 1; i < fullPoints; i++) {
               ctx.lineTo(
                 path[i].col * CELL_SIZE + CELL_SIZE / 2,
                 path[i].row * CELL_SIZE + CELL_SIZE / 2
               );
             }
+
+            const fractionalPart = blueLength - fullPoints;
+            const hasPartialSegment =
+              errorSegmentIndex === -1 &&
+              fractionalPart > 0.0001 &&
+              fullPoints > 0 &&
+              fullPoints < path.length;
+
+            if (hasPartialSegment) {
+              const startPoint = path[fullPoints - 1];
+              const endPoint = path[fullPoints];
+              const progress = fractionalPart;
+              ctx.lineTo(
+                startPoint.col * CELL_SIZE + CELL_SIZE / 2 +
+                  (endPoint.col - startPoint.col) * CELL_SIZE * progress,
+                startPoint.row * CELL_SIZE + CELL_SIZE / 2 +
+                  (endPoint.row - startPoint.row) * CELL_SIZE * progress
+              );
+            }
+
             ctx.stroke();
           }
 
@@ -1540,7 +1637,11 @@
               const pathIndex = path.findIndex(
                 (p) => p.row === row && p.col === col
               );
-              const isInPath = pathIndex !== -1;
+              const visiblePathCount = Math.min(
+                Math.floor(effectiveLength + 0.0001),
+                path.length
+              );
+              const isInPath = pathIndex !== -1 && pathIndex < visiblePathCount;
 
               // Определяем цвет цифры
               let color = "#333"; // По умолчанию темно-серый
@@ -1645,6 +1746,8 @@
             gameBlocked = true;
             messageDiv.textContent = "Ошибка! Нарушена последовательность.";
             messageDiv.style.color = "#f44336";
+            resetPathAnimation();
+            updateButtonsState();
             drawGrid();
             return false;
           }
@@ -1652,7 +1755,14 @@
 
         // Добавляем клетку в путь
         path.push(cell);
-        drawGrid();
+        updateButtonsState();
+
+        if (path.length === 1) {
+          resetPathAnimation();
+          drawGrid();
+        } else {
+          startPathAnimation();
+        }
 
         // Проверка на победу: все клетки заполнены И прошли через все цифры до 9
         if (path.length === GRID_SIZE * GRID_SIZE) {
@@ -1747,6 +1857,8 @@
           gameBlocked = false;
           errorSegmentIndex = -1;
           messageDiv.textContent = "";
+          resetPathAnimation();
+          updateButtonsState();
           drawGrid();
         }
 
@@ -1758,6 +1870,8 @@
 
         showInterstitialAd();
       });
+
+      updateButtonsState();
 
       // Запуск игры
       initAds();
