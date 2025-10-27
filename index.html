@@ -440,7 +440,6 @@
       <div id="controls">
         <button id="undo-btn">Отменить последнее действие</button>
         <button id="clear-btn">Очистить поле</button>
-        <button id="inline-rules-btn" class="info-button">Правила игры</button>
       </div>
       <div id="message"></div>
       <section id="inline-rules" class="inline-rules">
@@ -1703,7 +1702,6 @@
       const levelGrid = document.getElementById("level-grid");
       const gameContainer = document.getElementById("game-container");
       const menuToggleBtn = document.getElementById("menu-toggle");
-      const inlineRulesBtn = document.getElementById("inline-rules-btn");
       const levelModalNote = levelModal
         ? levelModal.querySelector(".menu-note")
         : null;
@@ -2408,12 +2406,6 @@
       closeRulesBtn.addEventListener("click", () => {
         hideModal(rulesModal);
       });
-
-      if (inlineRulesBtn) {
-        inlineRulesBtn.addEventListener("click", () => {
-          showModal(rulesModal);
-        });
-      }
 
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
