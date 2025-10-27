@@ -71,6 +71,32 @@
         width: 100%;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       }
+      .menu-toggle-button {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        width: 52px;
+        height: 52px;
+        padding: 0;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+        font-size: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(12px);
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        z-index: 850;
+      }
+      .menu-toggle-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3);
+      }
+      .menu-toggle-button:active {
+        transform: translateY(0);
+      }
       .hidden {
         display: none !important;
       }
@@ -126,6 +152,14 @@
       .menu-button:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+      }
+      .info-button {
+        background: linear-gradient(135deg, #26c6da 0%, #00acc1 100%);
+      }
+      .info-button:hover {
+        background: linear-gradient(135deg, #00acc1 0%, #0097a7 100%);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        transform: translateY(-2px);
       }
       .menu-note {
         font-size: 13px;
@@ -245,6 +279,36 @@
         color: #4caf50;
         min-height: 25px;
       }
+      .inline-rules {
+        margin-top: 24px;
+        padding: 18px 20px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 14px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+        color: #333;
+        width: 100%;
+        text-align: left;
+      }
+      .inline-rules h3 {
+        margin: 0 0 12px;
+        font-size: 18px;
+        color: #3949ab;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .inline-rules .rules-list {
+        padding-left: 20px;
+        margin: 0;
+      }
+      .inline-rules .rules-list li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+      }
+      .inline-rules .control-tip {
+        margin-top: 14px;
+        font-size: 15px;
+        line-height: 1.5;
+      }
       @media (max-width: 600px) {
         body {
           padding: 16px 12px 32px;
@@ -274,10 +338,28 @@
         .level-grid {
           max-height: 260px;
         }
+        .menu-toggle-button {
+          top: 12px;
+          left: 12px;
+          width: 44px;
+          height: 44px;
+          font-size: 22px;
+        }
+        .inline-rules {
+          padding: 16px;
+        }
       }
     </style>
   </head>
   <body>
+    <button
+      id="menu-toggle"
+      class="menu-toggle-button hidden"
+      type="button"
+      aria-label="Открыть главное меню"
+    >
+      &#9776;
+    </button>
     <div id="start-menu" class="start-menu-overlay">
       <div class="menu-panel">
         <h2>Стартовое меню</h2>
@@ -358,8 +440,31 @@
       <div id="controls">
         <button id="undo-btn">Отменить последнее действие</button>
         <button id="clear-btn">Очистить поле</button>
+        <button id="inline-rules-btn" class="info-button">Правила игры</button>
       </div>
       <div id="message"></div>
+      <section id="inline-rules" class="inline-rules">
+        <h3>Правила игры</h3>
+        <ul class="rules-list">
+          <li>Начните с клетки с цифрой <strong>1</strong>.</li>
+          <li>
+            Проведите линию последовательно через цифры
+            <strong>1→2→3→...9</strong>.
+          </li>
+          <li>
+            Линия должна заполнить <strong>все 49 клеток</strong> игрового поля.
+          </li>
+          <li>
+            Переходите только на <strong>соседние клетки</strong> (вверх, вниз,
+            влево, вправо).
+          </li>
+          <li>Нельзя проходить дважды через одну клетку.</li>
+        </ul>
+        <p class="control-tip">
+          <strong>💡 Управление:</strong> Рисуйте линию мышью или пальцем,
+          удерживая кнопку нажатой. Красная линия означает ошибку!
+        </p>
+      </section>
     </div>
 
     <script>
@@ -1597,6 +1702,8 @@
       const closeLevelsBtn = document.getElementById("close-levels-btn");
       const levelGrid = document.getElementById("level-grid");
       const gameContainer = document.getElementById("game-container");
+      const menuToggleBtn = document.getElementById("menu-toggle");
+      const inlineRulesBtn = document.getElementById("inline-rules-btn");
       const levelModalNote = levelModal
         ? levelModal.querySelector(".menu-note")
         : null;
@@ -1855,6 +1962,21 @@
         }
       }
 
+      function openStartMenu() {
+        showModal(startMenu);
+        isDrawing = false;
+        if (menuToggleBtn) {
+          menuToggleBtn.classList.add("hidden");
+        }
+      }
+
+      function closeStartMenu() {
+        hideModal(startMenu);
+        if (menuToggleBtn) {
+          menuToggleBtn.classList.remove("hidden");
+        }
+      }
+
       function renderLevelTiles() {
         if (!levelGrid) {
           return;
@@ -1915,7 +2037,7 @@
         hideModal(newGameModal);
         hideModal(rulesModal);
         hideModal(levelModal);
-        hideModal(startMenu);
+        closeStartMenu();
         if (gameContainer) {
           gameContainer.classList.remove("hidden");
         }
@@ -2238,6 +2360,12 @@
         showInterstitialAd();
       });
 
+      if (menuToggleBtn) {
+        menuToggleBtn.addEventListener("click", () => {
+          openStartMenu();
+        });
+      }
+
       continueBtn.addEventListener("click", async () => {
         await initGame();
         await ensureProgressLoaded();
@@ -2281,11 +2409,24 @@
         hideModal(rulesModal);
       });
 
+      if (inlineRulesBtn) {
+        inlineRulesBtn.addEventListener("click", () => {
+          showModal(rulesModal);
+        });
+      }
+
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
           hideModal(newGameModal);
           hideModal(rulesModal);
           hideModal(levelModal);
+          if (
+            currentRound > 0 &&
+            startMenu &&
+            !startMenu.classList.contains("hidden")
+          ) {
+            closeStartMenu();
+          }
         }
       });
 
