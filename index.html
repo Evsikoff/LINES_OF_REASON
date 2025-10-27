@@ -71,6 +71,151 @@
         width: 100%;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       }
+      .hidden {
+        display: none !important;
+      }
+      .start-menu-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(14, 24, 64, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        z-index: 900;
+      }
+      .menu-panel {
+        width: 100%;
+        max-width: 360px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        padding: 28px 24px;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(14px);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+      }
+      .menu-panel h2 {
+        margin: 0 0 8px;
+        font-size: 24px;
+        letter-spacing: 1px;
+        color: #fff;
+      }
+      .menu-panel p {
+        margin: 0;
+        font-size: 15px;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .menu-button {
+        width: 100%;
+      }
+      .menu-button.primary {
+        background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+      }
+      .menu-button.secondary {
+        background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);
+      }
+      .menu-button.accent {
+        background: linear-gradient(135deg, #ab47bc 0%, #8e24aa 100%);
+      }
+      .menu-button.info {
+        background: linear-gradient(135deg, #26c6da 0%, #00acc1 100%);
+      }
+      .menu-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+      }
+      .menu-note {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.75);
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        z-index: 1000;
+      }
+      .modal-content {
+        width: 100%;
+        max-width: 420px;
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 28px 24px;
+        color: #333;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .modal-content h3 {
+        margin: 0;
+        color: #4a4a4a;
+        font-size: 22px;
+        text-align: center;
+      }
+      .modal-content p {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      .modal-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 8px;
+      }
+      .modal button {
+        flex: 1 1 120px;
+        width: auto;
+      }
+      .modal button.confirm-action {
+        background: linear-gradient(135deg, #ef5350 0%, #d32f2f 100%);
+      }
+      .modal button.secondary-action {
+        background: linear-gradient(135deg, #b0bec5 0%, #90a4ae 100%);
+      }
+      .rules-list {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #333;
+        padding-left: 18px;
+      }
+      .rules-list li {
+        margin-bottom: 6px;
+      }
+      .level-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+        gap: 10px;
+        max-height: 320px;
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+      .level-tile {
+        padding: 10px 0;
+        background: linear-gradient(135deg, #5c6bc0 0%, #3949ab 100%);
+        font-weight: 600;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .level-tile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(60, 72, 182, 0.35);
+      }
+      .level-tile:disabled {
+        background: #b0bec5;
+        color: rgba(255, 255, 255, 0.8);
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+      }
       #undo-btn {
         background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
       }
@@ -100,33 +245,6 @@
         color: #4caf50;
         min-height: 25px;
       }
-      #rules {
-        margin-top: 20px;
-        padding: 15px;
-        background: #f9f9f9;
-        border-radius: 8px;
-        width: 100%;
-        max-width: 490px;
-        font-size: 14px;
-        line-height: 1.6;
-        color: #333;
-      }
-      #rules h3 {
-        margin-top: 0;
-        margin-bottom: 10px;
-        color: #667eea;
-        font-size: 16px;
-      }
-      #rules ul {
-        margin: 5px 0;
-        padding-left: 20px;
-      }
-      #rules li {
-        margin-bottom: 5px;
-      }
-      #rules p {
-        margin: 8px 0;
-      }
       @media (max-width: 600px) {
         body {
           padding: 16px 12px 32px;
@@ -143,16 +261,96 @@
         #game-container {
           padding: 16px;
         }
-        #rules {
-          font-size: 13px;
-        }
         button {
           font-size: 15px;
+        }
+        .menu-panel {
+          max-width: 320px;
+          padding: 24px 20px;
+        }
+        .modal-content {
+          padding: 24px 20px;
+        }
+        .level-grid {
+          max-height: 260px;
         }
       }
     </style>
   </head>
   <body>
+    <div id="start-menu" class="start-menu-overlay">
+      <div class="menu-panel">
+        <h2>Стартовое меню</h2>
+        <p>Выберите действие, чтобы продолжить игру.</p>
+        <button id="continue-btn" class="menu-button primary">
+          Продолжить игру
+        </button>
+        <div class="menu-note" id="continue-level-label">
+          Доступный уровень: 1
+        </div>
+        <button id="new-game-btn" class="menu-button secondary">Новая игра</button>
+        <button id="select-level-btn" class="menu-button accent">
+          Выбрать уровень
+        </button>
+        <button id="rules-btn" class="menu-button info">Правила игры</button>
+      </div>
+    </div>
+
+    <div id="new-game-modal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-content">
+        <h3>Новая игра</h3>
+        <p>
+          При запуске игры заново, сохранение вашего игрового процесса будет
+          потеряно. Вы уверены, что хотите начать новую игру?
+        </p>
+        <div class="modal-buttons">
+          <button id="confirm-new-game" class="confirm-action">Да</button>
+          <button id="cancel-new-game" class="secondary-action">Нет</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="rules-modal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-content">
+        <h3>Правила игры</h3>
+        <ul class="rules-list">
+          <li>Начните с клетки с цифрой <strong>1</strong>.</li>
+          <li>
+            Проведите линию последовательно через цифры
+            <strong>1→2→3→...→9</strong>.
+          </li>
+          <li>
+            Линия должна заполнить <strong>все 49 клеток</strong> игрового поля.
+          </li>
+          <li>
+            Переходите только на <strong>соседние клетки</strong> (вверх, вниз,
+            влево, вправо).
+          </li>
+          <li>Нельзя проходить дважды через одну клетку.</li>
+        </ul>
+        <p>
+          <strong>💡 Управление:</strong> Рисуйте линию мышью или пальцем,
+          удерживая кнопку нажатой. Красная линия означает ошибку!
+        </p>
+        <div class="modal-buttons">
+          <button id="close-rules-btn" class="secondary-action">Закрыть</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="level-modal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-content">
+        <h3>Выбор уровня</h3>
+        <div class="menu-note">
+          Доступны уровни от 1 до текущего открытого уровня.
+        </div>
+        <div id="level-grid" class="level-grid"></div>
+        <div class="modal-buttons">
+          <button id="close-levels-btn" class="secondary-action">Закрыть</button>
+        </div>
+      </div>
+    </div>
+
     <h1>ЛИНИИ РАЗУМА</h1>
     <div id="level-info">Уровень: <span id="current-level">1</span></div>
     <div id="game-container">
@@ -162,26 +360,6 @@
         <button id="clear-btn">Очистить поле</button>
       </div>
       <div id="message"></div>
-      <div id="rules">
-        <h3>📋 Правила игры:</h3>
-        <ul>
-          <li>Начните с клетки с цифрой <strong>1</strong></li>
-          <li>
-            Проведите линию последовательно через цифры
-            <strong>1→2→3→...→9</strong>
-          </li>
-          <li>Линия должна заполнить <strong>все 49 клеток</strong> поля</li>
-          <li>
-            Переходите только на <strong>соседние клетки</strong> (вверх, вниз,
-            влево, вправо)
-          </li>
-          <li>Нельзя проходить дважды через одну клетку</li>
-        </ul>
-        <p>
-          <strong>💡 Управление:</strong> Рисуйте линию мышью или пальцем,
-          удерживая кнопку нажатой. Красная линия означает ошибку!
-        </p>
-      </div>
     </div>
 
     <script>
@@ -1404,6 +1582,24 @@
       const clearBtn = document.getElementById("clear-btn");
       const messageDiv = document.getElementById("message");
       const levelSpan = document.getElementById("current-level");
+      const startMenu = document.getElementById("start-menu");
+      const continueBtn = document.getElementById("continue-btn");
+      const continueLevelLabel = document.getElementById("continue-level-label");
+      const newGameBtn = document.getElementById("new-game-btn");
+      const selectLevelBtn = document.getElementById("select-level-btn");
+      const rulesBtn = document.getElementById("rules-btn");
+      const newGameModal = document.getElementById("new-game-modal");
+      const confirmNewGameBtn = document.getElementById("confirm-new-game");
+      const cancelNewGameBtn = document.getElementById("cancel-new-game");
+      const rulesModal = document.getElementById("rules-modal");
+      const closeRulesBtn = document.getElementById("close-rules-btn");
+      const levelModal = document.getElementById("level-modal");
+      const closeLevelsBtn = document.getElementById("close-levels-btn");
+      const levelGrid = document.getElementById("level-grid");
+      const gameContainer = document.getElementById("game-container");
+      const levelModalNote = levelModal
+        ? levelModal.querySelector(".menu-note")
+        : null;
 
       console.log("✓ DOM элементы получены");
 
@@ -1425,6 +1621,10 @@
       let gameBlocked = false;
       let errorSegmentIndex = -1;
       let adCheckIntervalId = null;
+      let maxUnlockedLevel = 1;
+      let progressLoaded = false;
+      let appInitialized = false;
+      let initPromise = null;
 
       function computeCanvasDisplaySize() {
         const container = canvas.parentElement;
@@ -1583,6 +1783,20 @@
         }
       }
 
+      async function ensureProgressLoaded() {
+        if (progressLoaded) {
+          return maxUnlockedLevel;
+        }
+
+        console.log("→ Загрузка доступного уровня из VK Storage...");
+        const savedLevel = await loadSavedLevel();
+        maxUnlockedLevel = Math.min(savedLevel, gameDataJSON.length);
+        progressLoaded = true;
+        updateContinueButtonLabel();
+        console.log("✓ Доступный уровень:", maxUnlockedLevel);
+        return maxUnlockedLevel;
+      }
+
       async function initAds() {
         if (!isBridgeAvailable()) {
           console.log("⚠ VK Bridge недоступен (это нормально для CodeSandbox)");
@@ -1616,6 +1830,58 @@
         console.log("✓ Игровые данные загружены в память");
       }
 
+      function updateLevelModalNote() {
+        if (levelModalNote) {
+          levelModalNote.textContent = `Доступны уровни от 1 до ${maxUnlockedLevel}.`;
+        }
+      }
+
+      function updateContinueButtonLabel() {
+        if (continueLevelLabel) {
+          continueLevelLabel.textContent = `Доступный уровень: ${maxUnlockedLevel}`;
+        }
+        updateLevelModalNote();
+      }
+
+      function showModal(modalElement) {
+        if (modalElement) {
+          modalElement.classList.remove("hidden");
+        }
+      }
+
+      function hideModal(modalElement) {
+        if (modalElement) {
+          modalElement.classList.add("hidden");
+        }
+      }
+
+      function renderLevelTiles() {
+        if (!levelGrid) {
+          return;
+        }
+
+        levelGrid.innerHTML = "";
+
+        for (let level = 1; level <= gameDataJSON.length; level++) {
+          const tileButton = document.createElement("button");
+          tileButton.type = "button";
+          tileButton.textContent = level.toString();
+          tileButton.className = "level-tile";
+
+          if (level > maxUnlockedLevel) {
+            tileButton.disabled = true;
+          } else {
+            tileButton.addEventListener("click", async () => {
+              hideModal(levelModal);
+              await initGame();
+              await startGame(level);
+            });
+          }
+
+          levelGrid.appendChild(tileButton);
+        }
+      }
+
       async function loadLevel(roundId) {
         console.log("→ Загрузка уровня", roundId);
         const round = gameData.find((r) => r.round_id === roundId);
@@ -1642,6 +1908,18 @@
         clearGame();
         resizeCanvas();
         console.log("✓ Уровень", roundId, "загружен и отрисован");
+      }
+
+      async function startGame(level) {
+        console.log("→ Запуск уровня", level);
+        hideModal(newGameModal);
+        hideModal(rulesModal);
+        hideModal(levelModal);
+        hideModal(startMenu);
+        if (gameContainer) {
+          gameContainer.classList.remove("hidden");
+        }
+        await Promise.resolve(loadLevel(level));
       }
 
       function clearGame() {
@@ -1875,7 +2153,11 @@
           messageDiv.style.color = "#4CAF50";
 
           const nextLevel = currentRound + 1;
-          saveCurrentLevel(nextLevel);
+          const normalizedNextLevel = Math.min(nextLevel, gameDataJSON.length);
+          maxUnlockedLevel = Math.max(maxUnlockedLevel, normalizedNextLevel);
+          progressLoaded = true;
+          updateContinueButtonLabel();
+          saveCurrentLevel(maxUnlockedLevel);
 
           setTimeout(() => {
             showInterstitialAd().finally(() => {
@@ -1956,26 +2238,92 @@
         showInterstitialAd();
       });
 
+      continueBtn.addEventListener("click", async () => {
+        await initGame();
+        await ensureProgressLoaded();
+        await startGame(maxUnlockedLevel);
+      });
+
+      newGameBtn.addEventListener("click", () => {
+        showModal(newGameModal);
+      });
+
+      cancelNewGameBtn.addEventListener("click", () => {
+        hideModal(newGameModal);
+      });
+
+      confirmNewGameBtn.addEventListener("click", async () => {
+        hideModal(newGameModal);
+        await initGame();
+        maxUnlockedLevel = 1;
+        progressLoaded = true;
+        updateContinueButtonLabel();
+        await saveCurrentLevel(1);
+        await startGame(1);
+      });
+
+      selectLevelBtn.addEventListener("click", async () => {
+        await initGame();
+        await ensureProgressLoaded();
+        renderLevelTiles();
+        showModal(levelModal);
+      });
+
+      closeLevelsBtn.addEventListener("click", () => {
+        hideModal(levelModal);
+      });
+
+      rulesBtn.addEventListener("click", () => {
+        showModal(rulesModal);
+      });
+
+      closeRulesBtn.addEventListener("click", () => {
+        hideModal(rulesModal);
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          hideModal(newGameModal);
+          hideModal(rulesModal);
+          hideModal(levelModal);
+        }
+      });
+
       async function initGame() {
-        console.log("→ Инициализация игры...");
+        if (appInitialized) {
+          await ensureProgressLoaded();
+          return;
+        }
 
-        console.log("→ Шаг 1: Инициализация рекламы...");
-        await initAds();
-        console.log("✓ Шаг 1 завершён");
+        if (!initPromise) {
+          initPromise = (async () => {
+            console.log("→ Инициализация игры...");
 
-        console.log("→ Шаг 2: Загрузка данных игры...");
-        loadGameData();
-        console.log("✓ Шаг 2 завершён");
+            console.log("→ Шаг 1: Инициализация рекламы...");
+            await initAds();
+            console.log("✓ Шаг 1 завершён");
 
-        console.log("→ Шаг 3: Загрузка сохранённого уровня...");
-        const savedLevel = await loadSavedLevel();
-        console.log("✓ Шаг 3 завершён, уровень:", savedLevel);
+            console.log("→ Шаг 2: Загрузка данных игры...");
+            loadGameData();
+            console.log("✓ Шаг 2 завершён");
 
-        console.log("→ Шаг 4: Загрузка уровня", savedLevel);
-        await loadLevel(savedLevel);
-        console.log("✓ Шаг 4 завершён");
+            appInitialized = true;
 
-        console.log("✅ Игра полностью загружена и готова!");
+            console.log("→ Шаг 3: Загрузка сохранённого прогресса...");
+            await ensureProgressLoaded();
+
+            console.log("✅ Игра готова к запуску уровней через меню!");
+          })()
+            .catch((error) => {
+              console.error("Ошибка при инициализации игры:", error);
+              throw error;
+            })
+            .finally(() => {
+              initPromise = null;
+            });
+        }
+
+        await initPromise;
       }
 
       resizeCanvas({ redraw: false });
@@ -1983,7 +2331,12 @@
       window.addEventListener("orientationchange", () =>
         setTimeout(() => resizeCanvas(), 150)
       );
-      initGame();
+      initGame().catch((error) => {
+        console.error(
+          "Не удалось завершить инициализацию игры при старте:",
+          error
+        );
+      });
     </script>
   </body>
 </html>
