@@ -110,6 +110,23 @@
         padding: 24px;
         z-index: 900;
       }
+      .loading-spinner {
+        width: 56px;
+        height: 56px;
+        border: 6px solid rgba(255, 255, 255, 0.2);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        margin: 12px auto 0;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
       .menu-panel {
         width: 100%;
         max-width: 360px;
@@ -360,7 +377,14 @@
     >
       &#9776;
     </button>
-    <div id="start-menu" class="start-menu-overlay">
+    <div id="loading-overlay" class="start-menu-overlay">
+      <div class="menu-panel">
+        <h2>Загрузка</h2>
+        <p id="loading-status">Проверяем сохранения...</p>
+        <div class="loading-spinner" role="status" aria-label="Идет загрузка"></div>
+      </div>
+    </div>
+    <div id="start-menu" class="start-menu-overlay hidden">
       <div class="menu-panel">
         <h2>Стартовое меню</h2>
         <p>Выберите действие, чтобы продолжить игру.</p>
@@ -1705,6 +1729,8 @@
       const levelModalNote = levelModal
         ? levelModal.querySelector(".menu-note")
         : null;
+      const loadingOverlay = document.getElementById("loading-overlay");
+      const loadingStatus = document.getElementById("loading-status");
 
       console.log("✓ DOM элементы получены");
 
@@ -1730,6 +1756,7 @@
       let progressLoaded = false;
       let appInitialized = false;
       let initPromise = null;
+      let loadingOverlayDismissed = false;
 
       function computeCanvasDisplaySize() {
         const container = canvas.parentElement;
@@ -1890,14 +1917,19 @@
 
       async function ensureProgressLoaded() {
         if (progressLoaded) {
+          revealStartMenu();
           return maxUnlockedLevel;
         }
 
         console.log("→ Загрузка доступного уровня из VK Storage...");
+        if (loadingStatus) {
+          loadingStatus.textContent = "Загружаем сохраненный прогресс...";
+        }
         const savedLevel = await loadSavedLevel();
         maxUnlockedLevel = Math.min(savedLevel, gameDataJSON.length);
         progressLoaded = true;
         updateContinueButtonLabel();
+        revealStartMenu();
         console.log("✓ Доступный уровень:", maxUnlockedLevel);
         return maxUnlockedLevel;
       }
@@ -1946,6 +1978,22 @@
           continueLevelLabel.textContent = `Доступный уровень: ${maxUnlockedLevel}`;
         }
         updateLevelModalNote();
+      }
+
+      function hideLoadingOverlay() {
+        if (loadingOverlay) {
+          loadingOverlay.classList.add("hidden");
+        }
+      }
+
+      function revealStartMenu() {
+        if (loadingOverlayDismissed) {
+          return;
+        }
+
+        loadingOverlayDismissed = true;
+        hideLoadingOverlay();
+        openStartMenu();
       }
 
       function showModal(modalElement) {
