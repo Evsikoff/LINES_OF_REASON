@@ -1741,6 +1741,7 @@
       let canvasDisplaySize = canvas.clientWidth || canvas.width;
       let cellSize = canvasDisplaySize / GRID_SIZE;
       const AD_FORMAT = "interstitial";
+      const AD_COOLDOWN_MS = 30_000;
       const STORAGE_KEY = "lines_of_mind_level";
 
       let gameData = [];
@@ -1757,6 +1758,8 @@
       let appInitialized = false;
       let initPromise = null;
       let loadingOverlayDismissed = false;
+      let adCooldownTimerId = null;
+      let adCooldownUntil = 0;
 
       function computeCanvasDisplaySize() {
         const container = canvas.parentElement;
@@ -1824,6 +1827,26 @@
         return available;
       }
 
+      function isAdCooldownActive() {
+        return Date.now() < adCooldownUntil;
+      }
+
+      function startAdCooldown() {
+        adCooldownUntil = Date.now() + AD_COOLDOWN_MS;
+        if (adCooldownTimerId !== null) {
+          clearTimeout(adCooldownTimerId);
+        }
+
+        console.log(
+          `⏳ Таймер рекламы запущен на ${AD_COOLDOWN_MS / 1000} секунд`
+        );
+
+        adCooldownTimerId = setTimeout(() => {
+          console.log("⌛ Таймер рекламы завершён");
+          adCooldownTimerId = null;
+        }, AD_COOLDOWN_MS);
+      }
+
       async function checkNativeAds() {
         if (!isBridgeAvailable()) {
           return;
@@ -1839,6 +1862,13 @@
       }
 
       async function showInterstitialAd() {
+        if (isAdCooldownActive()) {
+          console.log(
+            "⏳ Рекламный таймер активен, показ рекламы отменён до его завершения"
+          );
+          return;
+        }
+
         if (!isBridgeAvailable()) {
           return;
         }
@@ -1850,7 +1880,10 @@
 
           if (!response?.result) {
             console.warn("Показ interstitial-рекламы не удался", response);
+            return;
           }
+
+          startAdCooldown();
         } catch (error) {
           console.error("Ошибка при показе interstitial-рекламы", error);
         }
